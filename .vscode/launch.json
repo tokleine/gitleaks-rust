@@ -1,0 +1,13 @@
+{
+    "configurations": [
+    {
+        "type": "lldb",
+        "request": "launch",
+        "name": "Debug rust with lldb",
+        "program": "${workspaceFolder}/target/debug/gitleaks-rust",
+        "args": [],
+        "cwd": "${workspaceFolder}",
+        "preLaunchTask": "cargo build"
+    }
+    ]
+}
