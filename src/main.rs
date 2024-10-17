@@ -2,30 +2,40 @@ use regex::Regex;
 use std::time::Instant;
 
 fn main() {
-    let re: [(Regex, &str); 5] = [
-        (Regex::new(r"abc").unwrap(), "abc123"),
+    let re = [
+        (r"abc", "abc123"),
         (
-            Regex::new(r"https?://.+:.+@dev.azure.com.*").unwrap(),
+            r"https?://.+:.+@dev.azure.com.*",
             "https://username:password@dev.azure.com",
         ),
         (
-            Regex::new(r"https?://.+:.+@dev.azure.com.*").unwrap(),
+            r"https?://.+:.+@dev.azure.com.*",
             "https://username.password@dev.azure.com",
         ),
         (
-            Regex::new(r"eyj[a-zA-Z0-9\-_%]+\.eyj[a-zA-Z0-9\-_%]+\.[a-zA-Z0-9\-_%]+").unwrap(), // OAuth JWT
+            r"eyj[a-zA-Z0-9\-_%]+\.eyj[a-zA-Z0-9\-_%]+\.[a-zA-Z0-9\-_%]+", // OAuth JWT
             "eyj0eXAiOiJKV1.eyjhdWQiOMi4wIn0.OnvSu-8w",
         ),
-        (Regex::new(r"token").unwrap(), "asd the token is: eyj...."),
+        (r"token", "asd the token is: eyj...."),
     ];
 
-    for (pattern, text) in re.iter() {
-        let start = Instant::now();
-        let result: bool = match_pattern_in_haystack(pattern, text);
-        let duration = start.elapsed();
+    let start = Instant::now();
+    let examples: Vec<_> = re
+        .iter()
+        .map(|(re, text)| (Regex::new(re).expect("Invalid regex string"), text))
+        .collect();
+    println!("Time to compile regex: {:?}", start.elapsed());
 
-        println!("Result: {}. Time taken: {:?}", result, duration);
+    let start = Instant::now();
+    for (re, text) in examples.iter() {
+        println!(
+            "Pattern: {:?}, Text: {:?}, Result: {:?}",
+            re,
+            text,
+            match_pattern_in_haystack(re, text)
+        );
     }
+    println!("Time to match regex: {:?}", start.elapsed());
 }
 
 fn match_pattern_in_haystack(pattern: &Regex, haystack: &str) -> bool {
@@ -33,7 +43,7 @@ fn match_pattern_in_haystack(pattern: &Regex, haystack: &str) -> bool {
 }
 
 /*
- * First iteration: function to identify 5 common patterns in strings
+ * First iteration: function to identify 5 common patterns in strings - check
  * Second itegration: function to read a file and check for patterns
  * Third iteration: CLI to real all files in a directory and check for patterns
  * ...
