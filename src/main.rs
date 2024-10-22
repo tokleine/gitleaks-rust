@@ -23,43 +23,26 @@ fn main() {
         .collect();
 
     // read file
-    // let start = Instant::now();
     let file_content = std::fs::read_to_string("data/test_file.txt").expect("Unable to read file");
-    // println!("Reading file took: {:?}", start.elapsed());
 
     // check for patterns without itering over lines
-    // let start = Instant::now();
     for (id, regex) in regexes.iter() {
         if regex.is_match(&file_content) {
-            // let found_match = regex.find(&file_content).unwrap(); // limitation: only first match, no surrounding text
-            let found_matches: Vec<(usize, usize, &str)> = regex
+            // find all matches for a given regex
+            let found_matches: Vec<(usize, usize, &str, usize)> = regex
                 .find_iter(&file_content)
-                .map(|m| (m.start(), m.end(), m.as_str())) // get match as well as start and end index
-                .collect();
-
-            // get lines of found matches and add to found_matches
-            let found_lines: Vec<usize> = found_matches
-                .iter()
-                .map(|(start_idx, _, _)| file_content[..*start_idx].matches('\n').count() + 1)
-                .collect();
-
-
-            // add lines to found_matches
-            let found_matches: Vec<(usize, usize, &str, usize)> = found_matches
-                .iter()
-                .zip(found_lines.iter())
-                .map(|((start_idx, end_idx, s), line)| {
+                .map(|m| {
                     (
-                        *start_idx,
-                        *end_idx,
-                        *s,
-                        *line,
+                        m.start(), // start index of match
+                        m.end(),   // end index of match
+                        m.as_str(),// matched string
+                        &file_content[..m.start()].matches('\n').count() + 1, // line number, as counted by line breaks
                     )
-                })
+                }) // get match as well as start and end index
                 .collect();
 
             // print found matches
-            for ( start_idx, end_idx, _, line) in found_matches {
+            for (start_idx, end_idx, _, line) in found_matches {
                 println!(
                     "Found pattern '{}' at line {}: ...{}{}{}{}{}...",
                     id,
@@ -74,5 +57,4 @@ fn main() {
             }
         }
     }
-    // println!("Checking for patterns took: {:?}", start.elapsed());
 }
