@@ -1,48 +1,56 @@
 use regex::Regex;
-use std::time::Instant;
+// use std::time::Instant;
 
 fn main() {
+    //define patterns
     let patterns = [
-        (1,r"abc"),
-        (2,r"https?://.+:.+@dev.azure.com.*"),
-        (3,r"https?://.+:.+@dev.azure.com.*"),
-        (4,r"eyj[a-zA-Z0-9\-_%]+\.eyj[a-zA-Z0-9\-_%]+\.[a-zA-Z0-9\-_%]+"), // OAuth JWT
-        (5,r"[tT]oken")
+        (1, r"abc"),
+        (2, r"https?://.+:.+@dev.azure.com.*"),
+        (3, r"https?://.+:.+@dev.azure.com.*"),
+        (
+            4,
+            r"eyj[a-zA-Z0-9\-_%]+\.eyj[a-zA-Z0-9\-_%]+\.[a-zA-Z0-9\-_%]+",
+        ), // OAuth JWT
+        (5, r"[tT]oken"),
     ];
 
+    const LOOK_AHEAD_AND_BEHIND_SIZE: usize = 5;
+
+    // compile regexes, slow operation
     let regexes: Vec<_> = patterns
         .iter()
-        .map(|(id,re)| (id,Regex::new(re).expect("Invalid regex string")))
+        .map(|(id, re)| (id, Regex::new(re).expect("Invalid regex string")))
         .collect();
 
-    // read file 
-    let start = Instant::now();
+    // read file
+    // let start = Instant::now();
     let file_content = std::fs::read_to_string("data/test_file.txt").expect("Unable to read file");
-    println!("Reading file took: {:?}", start.elapsed());
+    // println!("Reading file took: {:?}", start.elapsed());
 
-    // check for patterns
-    let start = Instant::now();
+    // check for patterns without itering over lines
+    // let start = Instant::now();
     for (id, regex) in regexes.iter() {
         if regex.is_match(&file_content) {
             // let found_match = regex.find(&file_content).unwrap(); // limitation: only first match, no surrounding text
-            let found_matches = regex.find_iter(&file_content).map(|m| m.as_str()).collect::<Vec<&str>>(); // get all matches
-            println!("Found pattern '{}' {} times: {:?}", id, found_matches.len(), found_matches);
+            let found_matches: Vec<(&str, usize, usize)> = regex
+                .find_iter(&file_content)
+                .map(|m| (m.as_str(), m.start(), m.end())) // get match as well as start and end index
+                .collect();
+            for (_, start_idx, end_idx) in found_matches {
+                println!(
+                    "Found pattern '{}' at lines {}-{}: {}{}{}{}{}",
+                    id,
+                    start_idx,
+                    end_idx,
+                    &file_content[start_idx - LOOK_AHEAD_AND_BEHIND_SIZE..start_idx]
+                        .replace("\n", ""),
+                    "\x1b[1;31m", // ANSI escape code for bold red text
+                    &file_content[start_idx..end_idx].replace("\n", ""),
+                    "\x1b[0m", // ANSI escape code to reset
+                    &file_content[end_idx..end_idx + LOOK_AHEAD_AND_BEHIND_SIZE].replace("\n", "")
+                );
+            }
         }
     }
-    println!("Checking for patterns took: {:?}", start.elapsed());
-
+    // println!("Checking for patterns took: {:?}", start.elapsed());
 }
-
-/*
- * First iteration: function to identify 5 common patterns in strings - check
- * Second itegration: function to read a file and check for patterns, get line number and line text
- * Third iteration: build CLI to read all files in a directory and check for patterns
- * Fourth iteration: CLI to read all files in a directory and check for patterns, with exclusion list
- * Fifth iteration: check git log for patterns
- *
- * Feature list:
- * regex pattern matching
- * false positive exlusion
- * filepath & pre-fix exclusion
- *
-*/
