@@ -32,16 +32,38 @@ fn main() {
     for (id, regex) in regexes.iter() {
         if regex.is_match(&file_content) {
             // let found_match = regex.find(&file_content).unwrap(); // limitation: only first match, no surrounding text
-            let found_matches: Vec<(&str, usize, usize)> = regex
+            let found_matches: Vec<(usize, usize, &str)> = regex
                 .find_iter(&file_content)
-                .map(|m| (m.as_str(), m.start(), m.end())) // get match as well as start and end index
+                .map(|m| (m.start(), m.end(), m.as_str())) // get match as well as start and end index
                 .collect();
-            for (_, start_idx, end_idx) in found_matches {
+
+            // get lines of found matches and add to found_matches
+            let found_lines: Vec<usize> = found_matches
+                .iter()
+                .map(|(start_idx, _, _)| file_content[..*start_idx].matches('\n').count() + 1)
+                .collect();
+
+
+            // add lines to found_matches
+            let found_matches: Vec<(usize, usize, &str, usize)> = found_matches
+                .iter()
+                .zip(found_lines.iter())
+                .map(|((start_idx, end_idx, s), line)| {
+                    (
+                        *start_idx,
+                        *end_idx,
+                        *s,
+                        *line,
+                    )
+                })
+                .collect();
+
+            // print found matches
+            for ( start_idx, end_idx, _, line) in found_matches {
                 println!(
-                    "Found pattern '{}' at lines {}-{}: {}{}{}{}{}",
+                    "Found pattern '{}' at line {}: ...{}{}{}{}{}...",
                     id,
-                    start_idx,
-                    end_idx,
+                    line,
                     &file_content[start_idx - LOOK_AHEAD_AND_BEHIND_SIZE..start_idx]
                         .replace("\n", ""),
                     "\x1b[1;31m", // ANSI escape code for bold red text
