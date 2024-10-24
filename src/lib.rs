@@ -1,4 +1,5 @@
 mod constants;
+use log::info;
 
 pub struct MatchDetail<'a> {
     pub pattern_id: usize,
@@ -36,21 +37,25 @@ pub fn check_sequential<'a>(
 }
 
 pub fn print_leaks(found_matches: Vec<MatchDetail>, file_content: &str) {
+    if found_matches.is_empty() {
+        info!("No leaks found! 🎉");
+        return;
+    }
     // print found matches
     for match_detail in found_matches {
         println!(
             "Found pattern '{}' at line {}: ...{}{}{}{}{}...",
             match_detail.pattern_id,
             match_detail.line,
-            &file_content[match_detail.start_idx - constants::LOOK_AHEAD_AND_BEHIND_SIZE..match_detail.start_idx]
+            &file_content[match_detail.start_idx - constants::LOOK_AHEAD_AND_BEHIND_SIZE
+                ..match_detail.start_idx]
                 .replace("\n", ""),
             "\x1b[1;31m", // ANSI escape code for bold red text
             &file_content[match_detail.start_idx..match_detail.end_idx].replace("\n", ""),
             "\x1b[0m", // ANSI escape code to reset
-            &file_content[match_detail.end_idx..match_detail.end_idx + constants::LOOK_AHEAD_AND_BEHIND_SIZE]
+            &file_content[match_detail.end_idx
+                ..match_detail.end_idx + constants::LOOK_AHEAD_AND_BEHIND_SIZE]
                 .replace("\n", "")
         );
     }
 }
-
-
