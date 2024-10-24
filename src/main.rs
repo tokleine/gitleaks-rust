@@ -3,7 +3,7 @@ mod constants;
 use clap::Parser;
 use clap_verbosity::{InfoLevel, Verbosity};
 use gitleaks_rs::{check_sequential, print_leaks};
-use log::{debug, info};
+use log::{debug, error, info};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -39,9 +39,12 @@ fn main() {
 
     let found_matches = check_sequential(regexes, &file_content);
 
-    print_leaks(found_matches, &file_content);
-    debug!(
-        "Exiting program, time elapsed: {}s",
-        start_time.elapsed().as_secs_f32()
-    );
+    let status = print_leaks(found_matches, &file_content);
+    match status {
+        0 => info!("No leaks found! 🎉"),
+        1 => std::process::exit(1),
+        2_u8..=u8::MAX => error!("Unexpected behavior ocurred! 😢"),
+    }
+
+    debug!("Time elapsed: {}s", start_time.elapsed().as_secs_f32());
 }
