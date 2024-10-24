@@ -43,7 +43,10 @@ fn main() {
     match status {
         0 => info!("No leaks found! 🎉"),
         1 => std::process::exit(1),
-        2_u8..=u8::MAX => error!("Unexpected behavior ocurred! 😢"),
+        2_u8..=u8::MAX => {
+            error!("Unexpected behavior ocurred! Aborting... 😢");
+            std::process::exit(1)
+        }
     }
 
     debug!("Time elapsed: {}s", start_time.elapsed().as_secs_f32());
